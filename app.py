@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     app = Flask(__name__)
 
-    @app.route('/webhook', methods=['POST'])
+    @app.route('/sms', methods=['POST'])
     def webhook():
         message = request.form
 
