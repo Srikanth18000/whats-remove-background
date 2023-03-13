@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, make_response
+import requests
 
 from twilio.twiml.messaging_response import MessagingResponse
 
