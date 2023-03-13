@@ -1,47 +1,48 @@
-from twilio.twiml.messaging_response import MessagingResponse
-import requests
 import os
+from twilio.twiml.messaging_response import MessagingResponse
+from removebg import RemoveBg
 
-from flask import Flask, request, redirect
+# Set up the Remove.bg API client
+removebg = RemoveBg(api_key, 'error')
 
-app = Flask(__name__)
+def remove_background(image_url):
+    # Remove the background from the image
+    response = removebg.remove_background_from_url(image_url)
 
-# Set the API endpoint and the API key
-endpoint = 'https://api.remove.bg/v1.0/removebg'
-api_key = 'ekz5gjB1vnd6REFibrBbnoMD'
+    # Save the result to a file
+    with open('output.png', 'wb') as f:
+        f.write(response.content)
 
-@app.route("/sms", methods=['POST'])
-def sms_reply():
-    """Respond to incoming messages with a friendly SMS."""
-    # Get the incoming message
-    incoming_msg = request.values.get('Body', '').strip()
-    # Get the media URL from the message
-    media_url = request.values.get('MediaUrl0', '')
-    # Check if the message has media
-    if media_url:
-        # Download the image
-        response = requests.get(media_url)
-        img = response.content
-        # Set up the API headers and parameters
-        headers = {'X-Api-Key': api_key}
-        files = {'image_file': img}
-        params = {'size': 'auto'}
-        # Send a POST request to Remove.bg API to remove the background
-        response = requests.post(endpoint, headers=headers, files=files, params=params)
-        # Save the resulting image in JPEG format
-        with open('result.jpg', 'wb') as out:
-            out.write(response.content)
-        # Send the resulting image back to the user
+    return 'output.png'
+
+def handle_message(message):
+    # Check if the message has any image attachments
+    if 'MediaUrl0' in message:
+        image_url = message['MediaUrl0']
+        image_path = remove_background(image_url)
+
+        # Create a Twilio messaging response with the processed image attached
         resp = MessagingResponse()
-        message = resp.message()
-        message.media('http://{}/result.jpg'.format(request.host))
+        resp.message().media(image_path)
+
         return str(resp)
     else:
-        # Send a default message if no media is found
-        resp = MessagingResponse()
-        resp.message("Send me an image with a background to remove it!")
-        return str(resp)
+        # If the message doesn't have any image attachments, just send a reply
+        return 'Send me an image and I will remove the background!'
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    from flask import Flask, request
+
+    app = Flask(__name__)
+
+    @app.route('/webhook', methods=['POST'])
+    def webhook():
+        message = request.form
+
+        response = handle_message(message)
+
+        return response
+
+    if __name__ == '__main__':
+        app.run(debug=True)
 
