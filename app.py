@@ -10,7 +10,7 @@ app = Flask(__name__)
 endpoint = 'https://api.remove.bg/v1.0/removebg'
 api_key = 'ekz5gjB1vnd6REFibrBbnoMD'
 
-@app.route("/sms", methods=['GET', 'POST'])
+@app.route("/sms", methods=['POST'])
 def sms_reply():
     """Respond to incoming messages with a friendly SMS."""
     # Get the incoming message
@@ -28,13 +28,13 @@ def sms_reply():
         params = {'size': 'auto'}
         # Send a POST request to Remove.bg API to remove the background
         response = requests.post(endpoint, headers=headers, files=files, params=params)
-        # Save the resulting image
-        with open('result.png', 'wb') as out:
+        # Save the resulting image in JPEG format
+        with open('result.jpg', 'wb') as out:
             out.write(response.content)
         # Send the resulting image back to the user
         resp = MessagingResponse()
         message = resp.message()
-        message.media('http://{}/result.png'.format(request.host))
+        message.media('http://{}/result.jpg'.format(request.host))
         return str(resp)
     else:
         # Send a default message if no media is found
@@ -44,5 +44,4 @@ def sms_reply():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
 
