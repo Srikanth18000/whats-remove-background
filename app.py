@@ -28,7 +28,7 @@ def sms():
     response = make_response(jsonify(error_message), 400)
     response.headers['Content-Type'] = 'application/json'
 
-    resp = messaging_response.Message()
+    resp = MessagingResponse()
     resp.body('Error: ' + response.get_data().decode('utf-8'))
     resp.content_type = 'application/json'
     return str(resp)
